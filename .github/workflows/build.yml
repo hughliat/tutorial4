@@ -1,3 +1,46 @@
-# Run tests 
-- name: Run tests 
-  run: mvn clean test
+# 工作流名称
+name: Maven CI/CD
+
+# 触发条件：当推送到main分支或创建Pull Request时执行
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# 工作流任务
+jobs:
+  build:
+    # 运行环境：最新版Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+    # 步骤1：拉取代码到工作目录
+    - uses: actions/checkout@v4
+
+    # 步骤2：配置Java环境（使用Java 17，可根据项目需求修改版本）
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        # 启用Maven依赖缓存，加速构建
+        cache: maven
+
+    # 步骤3：执行Maven清理和测试命令
+    - name: Build and test with Maven
+      run: mvn clean verify
+
+    # 步骤4：（可选）生成测试报告
+    - name: Generate test report
+      if: always()  # 即使测试失败也生成报告
+      run: mvn surefire-report:report
+
+    # 步骤5：（可选）上传测试报告作为artifact
+    - name: Upload test report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: target/site/
+    
